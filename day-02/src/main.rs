@@ -9,10 +9,8 @@ static BLUE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d*) blue").unwrap()
 
 fn capture_num(regex: &Lazy<Regex>, haystack: &str) -> Option<usize> {
     let caps = regex.captures(haystack)?;
-    return caps[1].parse::<usize>().ok();
+    caps[1].parse::<usize>().ok()
 }
-
-
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 struct Handful(usize, usize, usize);
@@ -27,8 +25,6 @@ impl Handful {
     }
 }
 
-
-
 #[derive(Clone, PartialEq, Debug)]
 struct Game {
     id: usize,
@@ -39,33 +35,39 @@ impl Game {
     fn new(desc: &str) -> Self {
         // NOTE: Unwrapping is used when the input is GUARANTEED.
         // The code should not work without proper input strings.
-        let (game, handful_strs) = desc.split_once(":").unwrap();
+        let (game, handful_strs) = desc.split_once(':').unwrap();
 
         Self {
             id: capture_num(&GAME_REGEX, game).unwrap(),
-            handfuls: handful_strs.split(";").map(Handful::new).collect::<Vec<_>>(),
+            handfuls: handful_strs
+                .split(';')
+                .map(Handful::new)
+                .collect::<Vec<_>>(),
         }
     }
 
     fn minimum_cubes(&self) -> (usize, usize, usize) {
-        self.handfuls.iter()
-            .fold((0, 0, 0), |acc, handful| (max(acc.0, handful.0), max(acc.1, handful.1), max(acc.2, handful.2)))
+        self.handfuls.iter().fold((0, 0, 0), |acc, handful| {
+            (
+                max(acc.0, handful.0),
+                max(acc.1, handful.1),
+                max(acc.2, handful.2),
+            )
+        })
     }
 
     fn is_within_max(&self, r: usize, g: usize, b: usize) -> bool {
         let min = self.minimum_cubes();
 
-        return min.0 <= r && min.1 <= g && min.2 <= b;
+        min.0 <= r && min.1 <= g && min.2 <= b
     }
 
     fn power_of_min_set(&self) -> usize {
         let min = self.minimum_cubes();
 
-        return min.0 * min.1 * min.2;
+        min.0 * min.1 * min.2
     }
 }
-
-
 
 fn main() {
     let aoc_input = include_str!("./input.txt");
@@ -81,8 +83,6 @@ fn main() {
     let part2_answer: usize = games.iter().map(Game::power_of_min_set).sum();
     println!("Part 2 sum: {}", part2_answer);
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -109,13 +109,13 @@ mod tests {
     }
 
     fn _make_games() -> [Game; 5] {
-        return [
+        [
             Game::new("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"),
             Game::new("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue"),
             Game::new("Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red"),
             Game::new("Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red"),
             Game::new("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"),
-        ];
+        ]
     }
 
     #[test]
