@@ -2,21 +2,14 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::cmp::max;
 
+static GAME_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"Game (\d*)").unwrap());
+static RED_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d*) red").unwrap());
+static GREEN_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d*) green").unwrap());
+static BLUE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\d*) blue").unwrap());
 
-
-static GAME_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"Game (?<id>\d*)").unwrap());
-static RED_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?<count>\d*) red").unwrap());
-static GREEN_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?<count>\d*) green").unwrap());
-static BLUE_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?<count>\d*) blue").unwrap());
-
-fn capture_count(regex: &Lazy<Regex>, set: &str) -> usize {
-    if let Some(caps) = regex.captures(set) {
-        if let Ok(count) = caps["count"].parse::<usize>() {
-            return count;
-        }
-    }
-
-    return 0;
+fn capture_num(regex: &Lazy<Regex>, haystack: &str) -> Option<usize> {
+    let caps = regex.captures(haystack)?;
+    return caps[1].parse::<usize>().ok();
 }
 
 
@@ -25,10 +18,10 @@ fn capture_count(regex: &Lazy<Regex>, set: &str) -> usize {
 struct Handful(usize, usize, usize);
 
 impl Handful {
-    fn new(set: &str) -> Self {
-        let red_count = capture_count(&RED_REGEX, set);
-        let green_count = capture_count(&GREEN_REGEX, set);
-        let blue_count = capture_count(&BLUE_REGEX, set);
+    fn new(input: &str) -> Self {
+        let red_count = capture_num(&RED_REGEX, input).unwrap_or(0);
+        let green_count = capture_num(&GREEN_REGEX, input).unwrap_or(0);
+        let blue_count = capture_num(&BLUE_REGEX, input).unwrap_or(0);
 
         Self(red_count, green_count, blue_count)
     }
@@ -44,12 +37,12 @@ struct Game {
 
 impl Game {
     fn new(desc: &str) -> Self {
-        // NOTE: Unwrapping is used when the input is GUARANTEED. The code should not work without
-        // proper input strings.
+        // NOTE: Unwrapping is used when the input is GUARANTEED.
+        // The code should not work without proper input strings.
         let (game, handful_strs) = desc.split_once(":").unwrap();
 
         Self {
-            id: GAME_REGEX.captures(game).unwrap()["id"].parse::<usize>().unwrap(),
+            id: capture_num(&GAME_REGEX, game).unwrap(),
             handfuls: handful_strs.split(";").map(Handful::new).collect::<Vec<_>>(),
         }
     }
@@ -68,7 +61,7 @@ impl Game {
     fn power_of_min_set(&self) -> usize {
         let min = self.minimum_cubes();
 
-        min.0 * min.1 * min.2
+        return min.0 * min.1 * min.2;
     }
 }
 
@@ -97,20 +90,11 @@ mod tests {
 
     #[test]
     fn handful_parsing() {
-        let input = "3 blue, 4 red";
-        assert_eq!(Handful::new(input), Handful(4, 0, 3));
-
-        let input = "1 red, 2 green, 6 blue";
-        assert_eq!(Handful::new(input), Handful(1, 2, 6));
-
-        let input = "2 green";
-        assert_eq!(Handful::new(input), Handful(0, 2, 0));
-
-        let input = "1 blue, 2 green";
-        assert_eq!(Handful::new(input), Handful(0, 2, 1));
-
-        let input = "3 green, 4 blue, 1 red";
-        assert_eq!(Handful::new(input), Handful(1, 3, 4));
+        assert_eq!(Handful::new("3 blue, 4 red"), Handful(4, 0, 3));
+        assert_eq!(Handful::new("1 red, 2 green, 6 blue"), Handful(1, 2, 6));
+        assert_eq!(Handful::new("2 green"), Handful(0, 2, 0));
+        assert_eq!(Handful::new("1 blue, 2 green"), Handful(0, 2, 1));
+        assert_eq!(Handful::new("3 green, 4 blue, 1 red"), Handful(1, 3, 4));
     }
 
     #[test]
@@ -124,57 +108,43 @@ mod tests {
         assert_eq!(Game::new(input), Game { id: 2, handfuls });
     }
 
+    fn _make_games() -> [Game; 5] {
+        return [
+            Game::new("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green"),
+            Game::new("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue"),
+            Game::new("Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red"),
+            Game::new("Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red"),
+            Game::new("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green"),
+        ];
+    }
+
     #[test]
     fn game_min_cubes() {
-        let game1 = Game::new("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green");
-        assert_eq!(game1.minimum_cubes(), (4, 2, 6));
-
-        let game2 = Game::new("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue");
-        assert_eq!(game2.minimum_cubes(), (1, 3, 4));
-
-        let game3 = Game::new("Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red");
-        assert_eq!(game3.minimum_cubes(), (20, 13, 6));
-
-        let game4 = Game::new("Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red");
-        assert_eq!(game4.minimum_cubes(), (14, 3, 15));
-
-        let game5 = Game::new("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green");
-        assert_eq!(game5.minimum_cubes(), (6, 3, 2));
+        let games = _make_games();
+        assert_eq!(games[0].minimum_cubes(), (4, 2, 6));
+        assert_eq!(games[1].minimum_cubes(), (1, 3, 4));
+        assert_eq!(games[2].minimum_cubes(), (20, 13, 6));
+        assert_eq!(games[3].minimum_cubes(), (14, 3, 15));
+        assert_eq!(games[4].minimum_cubes(), (6, 3, 2));
     }
 
     #[test]
     fn game_within_max() {
-        let game1 = Game::new("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green");
-        assert!(game1.is_within_max(12, 13, 14));
-
-        let game2 = Game::new("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue");
-        assert!(game2.is_within_max(12, 13, 14));
-
-        let game3 = Game::new("Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red");
-        assert!(!game3.is_within_max(12, 13, 14));
-
-        let game4 = Game::new("Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red");
-        assert!(!game4.is_within_max(12, 13, 14));
-
-        let game5 = Game::new("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green");
-        assert!(game5.is_within_max(12, 13, 14));
+        let games = _make_games();
+        assert!(games[0].is_within_max(12, 13, 14));
+        assert!(games[1].is_within_max(12, 13, 14));
+        assert!(!games[2].is_within_max(12, 13, 14));
+        assert!(!games[3].is_within_max(12, 13, 14));
+        assert!(games[4].is_within_max(12, 13, 14));
     }
 
     #[test]
     fn game_min_powers() {
-        let game1 = Game::new("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green");
-        assert_eq!(game1.power_of_min_set(), 48);
-
-        let game2 = Game::new("Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue");
-        assert_eq!(game2.power_of_min_set(), 12);
-
-        let game3 = Game::new("Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red");
-        assert_eq!(game3.power_of_min_set(), 1560);
-
-        let game4 = Game::new("Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red");
-        assert_eq!(game4.power_of_min_set(), 630);
-
-        let game5 = Game::new("Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green");
-        assert_eq!(game5.power_of_min_set(), 36);
+        let games = _make_games();
+        assert_eq!(games[0].power_of_min_set(), 48);
+        assert_eq!(games[1].power_of_min_set(), 12);
+        assert_eq!(games[2].power_of_min_set(), 1560);
+        assert_eq!(games[3].power_of_min_set(), 630);
+        assert_eq!(games[4].power_of_min_set(), 36);
     }
 }
