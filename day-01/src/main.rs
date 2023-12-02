@@ -1,3 +1,6 @@
+#[derive(Clone, Copy, PartialEq)]
+enum AOC { Part1, Part2 }
+
 #[derive(Clone, Copy)]
 enum FindableType { Normal, Advanced }
 
@@ -25,8 +28,8 @@ const FINDABLES: [Findable; 18] = [
     Findable("9", 9, FindableType::Normal), Findable("nine", 9, FindableType::Advanced),
 ];
 
-fn get_calibration_value(line: &str, allow_advanced: bool) -> usize {
-    let findables = FINDABLES.iter().filter(|findable| allow_advanced || findable.normal());
+fn get_calibration_value(line: &str, aoc_mode: AOC) -> usize {
+    let findables = FINDABLES.iter().filter(|findable| aoc_mode == AOC::Part2 || findable.normal());
 
     let first_value = findables
         .clone()
@@ -48,10 +51,10 @@ fn get_calibration_value(line: &str, allow_advanced: bool) -> usize {
     return (first_value * 10) + last_value;
 }
 
-fn get_sum_of_input(input: &str, allow_advanced: bool) -> usize {
+fn get_sum_of_input(input: &str, aoc_mode: AOC) -> usize {
     input
         .lines()
-        .map(|line| get_calibration_value(line, allow_advanced))
+        .map(|line| get_calibration_value(line, aoc_mode))
         .sum()
 }
 
@@ -59,8 +62,8 @@ fn get_sum_of_input(input: &str, allow_advanced: bool) -> usize {
 fn main() {
     let aoc_input = include_str!("./input.txt");
 
-    println!("Part 1 sum: {}", get_sum_of_input(aoc_input, false));
-    println!("Part 2 sum: {}", get_sum_of_input(aoc_input, true));
+    println!("Part 1 sum: {}", get_sum_of_input(aoc_input, AOC::Part1));
+    println!("Part 2 sum: {}", get_sum_of_input(aoc_input, AOC::Part2));
 }
 
 
@@ -69,23 +72,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn calibration_value_numbers() {
-        assert_eq!(get_calibration_value("1abc2", false), 12);
-        assert_eq!(get_calibration_value("pqr3stu8vwx", false), 38);
-        assert_eq!(get_calibration_value("a1b2c3d4e5f", false), 15);
-        assert_eq!(get_calibration_value("treb7uchet", false), 77);
+    fn calibration_value_part1() {
+        assert_eq!(get_calibration_value("1abc2", AOC::Part1), 12);
+        assert_eq!(get_calibration_value("pqr3stu8vwx", AOC::Part1), 38);
+        assert_eq!(get_calibration_value("a1b2c3d4e5f", AOC::Part1), 15);
+        assert_eq!(get_calibration_value("treb7uchet", AOC::Part1), 77);
     }
 
     #[test]
-    fn calibration_value_text() {
-        assert_eq!(get_calibration_value("onetwo", true), 12);
-        assert_eq!(get_calibration_value("twone", true), 21);
+    fn calibration_value_part2() {
+        assert_eq!(get_calibration_value("onetwo", AOC::Part2), 12);
+        assert_eq!(get_calibration_value("twone", AOC::Part2), 21);
+        assert_eq!(get_calibration_value("two1", AOC::Part2), 21);
     }
 
     #[test]
     fn test_input_sum() {
         let input = "onetwo
             twone";
-        assert_eq!(get_sum_of_input(input, true), 33);
+        assert_eq!(get_sum_of_input(input, AOC::Part2), 33);
     }
 }
