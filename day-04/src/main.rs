@@ -2,37 +2,31 @@ use std::{collections::HashSet, u32};
 
 use nom::{
     bytes::complete::tag,
-    character::complete::digit1,
-    combinator::map_res,
-    multi::{many1, separated_list1},
+    character::complete::{self, digit1, space1},
+    multi::separated_list1,
     sequence::{separated_pair, tuple},
     IResult,
 };
 
-fn spaces(input: &str) -> IResult<&str, Vec<&str>> {
-    many1(tag(" "))(input)
+fn card_numbers(input: &str) -> IResult<&str, Vec<u32>> {
+    separated_list1(space1, complete::u32)(input)
 }
 
-fn card_numbers(input: &str) -> IResult<&str, Vec<usize>> {
-    separated_list1(spaces, map_res(digit1, str::parse))(input)
+fn card_prefix(input: &str) -> IResult<&str, (&str, &str, &str, &str, &str)> {
+    tuple((tag("Card"), space1, digit1, tag(":"), space1))(input)
 }
 
-fn card_prefix(input: &str) -> IResult<&str, (&str, Vec<&str>, &str, &str, Vec<&str>)> {
-    tuple((tag("Card"), spaces, digit1, tag(":"), spaces))(input)
+fn card_separator(input: &str) -> IResult<&str, (&str, &str, &str)> {
+    tuple((space1, tag("|"), space1))(input)
 }
 
-fn card_separator(input: &str) -> IResult<&str, (Vec<&str>, &str, Vec<&str>)> {
-    tuple((spaces, tag("|"), spaces))(input)
-}
-
-fn card_sections(input: &str) -> IResult<&str, (Vec<usize>, Vec<usize>)> {
+fn card_sections(input: &str) -> IResult<&str, (Vec<u32>, Vec<u32>)> {
     separated_pair(card_numbers, card_separator, card_numbers)(input)
 }
 
-#[derive(Debug)]
 struct Card {
-    winning_numbers: HashSet<usize>,
-    selected_numbers: Vec<usize>,
+    winning_numbers: HashSet<u32>,
+    selected_numbers: Vec<u32>,
 }
 
 impl Card {
