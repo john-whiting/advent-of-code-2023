@@ -4,50 +4,45 @@ use nom::{
     bytes::complete::tag,
     character::complete::digit1,
     combinator::map_res,
-    error::ErrorKind,
     multi::{many1, separated_list1},
-    sequence::separated_pair,
+    sequence::{separated_pair, tuple},
     IResult,
 };
 
-fn card_numbers(input: &str) -> IResult<&str, Vec<usize>> {
-    separated_list1(many1(tag(" ")), map_res(digit1, str::parse))(input)
+fn spaces(input: &str) -> IResult<&str, Vec<&str>> {
+    many1(tag(" "))(input)
 }
 
-fn card_separator(input: &str) -> IResult<&str, &str> {
-    let (input, _) = tag::<_, _, (_, ErrorKind)>(" |")(input).expect("expected list separator");
-    let (input, _) = many1::<_, _, (_, ErrorKind), _>(tag(" "))(input)
-        .expect("should contain space after separator");
-    Ok((input, ""))
+fn card_numbers(input: &str) -> IResult<&str, Vec<usize>> {
+    separated_list1(spaces, map_res(digit1, str::parse))(input)
+}
+
+fn card_prefix(input: &str) -> IResult<&str, (&str, Vec<&str>, &str, &str, Vec<&str>)> {
+    tuple((tag("Card"), spaces, digit1, tag(":"), spaces))(input)
+}
+
+fn card_separator(input: &str) -> IResult<&str, (Vec<&str>, &str, Vec<&str>)> {
+    tuple((spaces, tag("|"), spaces))(input)
+}
+
+fn card_sections(input: &str) -> IResult<&str, (Vec<usize>, Vec<usize>)> {
+    separated_pair(card_numbers, card_separator, card_numbers)(input)
 }
 
 #[derive(Debug)]
 struct Card {
-    id: usize,
     winning_numbers: HashSet<usize>,
     selected_numbers: Vec<usize>,
 }
 
 impl Card {
     fn new(input: &str) -> Self {
-        let (input, _) =
-            tag::<_, _, (_, ErrorKind)>("Card")(input).expect("should start with 'Card'");
-        let (input, _) = many1::<_, _, (_, ErrorKind), _>(tag(" "))(input)
-            .expect("should contain space after 'Card'");
-        let (input, id) = map_res::<_, _, _, (_, ErrorKind), _, _, _>(digit1, str::parse)(input)
-            .expect("should contain a Game ID'");
-        let (input, _) =
-            tag::<_, _, (_, ErrorKind)>(":")(input).expect("should have delimiting colon");
-        let (input, _) = many1::<_, _, (_, ErrorKind), _>(tag(" "))(input)
-            .expect("should contain space after ':'");
-        let (_, (winning_numbers, selected_numbers)) =
-            separated_pair(card_numbers, card_separator, card_numbers)(input)
-                .expect("should contain two number lists");
+        let (input, _) = card_prefix(input).expect("expected `Card ##:`");
+        let (_, (win_nums, sel_nums)) = card_sections(input).expect("expected card sections");
 
         Self {
-            id,
-            winning_numbers: HashSet::from_iter(winning_numbers),
-            selected_numbers,
+            winning_numbers: HashSet::from_iter(win_nums),
+            selected_numbers: sel_nums,
         }
     }
 
