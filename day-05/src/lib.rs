@@ -1,2 +1,2 @@
-pub mod info;
+pub mod almanac;
 pub mod parsing;

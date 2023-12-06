@@ -6,7 +6,7 @@ use nom::{
 };
 use nom_supreme::{parser_ext::ParserExt, tag::complete::tag};
 
-use crate::info::{MapInput, Seed};
+use crate::almanac::{MapInput, Seed};
 
 pub fn seeds(input: &str) -> IResult<&str, Vec<Seed>> {
     tag("seeds: ")

@@ -1,87 +1,32 @@
-use std::{collections::HashMap, ops::Range};
-
 use day_05::{
-    info::{
-        Fertilizer, Humidity, Light, Location, MapInput, MapInputs, SingleTuple, Soil, Temperature,
-        Water,
-    },
+    almanac::Location,
     parsing::{mapped_inputs, seeds},
 };
-
-trait MyContains<T> {
-    fn my_contains(&self, ele: T) -> bool;
-}
-
-impl<T: SingleTuple> MyContains<T> for Range<u64> {
-    fn my_contains(&self, ele: T) -> bool {
-        let num = ele.to_tuple().0;
-        self.start <= num && num < self.end
-    }
-}
-
-fn map_to_next<F: SingleTuple + Copy, T: SingleTuple>(
-    inputs: Vec<MapInput>,
-    prev: Vec<F>,
-) -> Vec<T> {
-    prev.iter()
-        .map(|tup| {
-            match (inputs
-                .iter()
-                .filter_map(|input| {
-                    match ((input.1..(input.1 + input.2)) as Range<u64>).my_contains(*tup) {
-                        true => Some((input.0 + (tup.to_tuple().0 - input.1),)),
-                        false => None,
-                    }
-                })
-                .next())
-            {
-                Some(x) => T::from_tuple(x),
-                None => T::from_tuple(tup.to_tuple()),
-            }
-        })
-        .collect()
-}
-
-fn map_to_next2<
-    F: day_05::info::SingleTuple + Eq + std::hash::Hash,
-    T: day_05::info::SingleTuple + Eq + std::hash::Hash + Copy,
->(
-    inputs: Vec<MapInput>,
-    prev: Vec<F>,
-) -> Vec<T> {
-    let hash_map: HashMap<F, T> = MapInputs(inputs).into();
-    prev.iter()
-        .map(|p| match hash_map.get(p) {
-            Some(x) => *x,
-            None => T::from_tuple(p.to_tuple()),
-        })
-        .collect()
-}
 
 fn process_part1(input: &str) -> u64 {
     let (input, seeds) = seeds(input).expect("should contain seeds");
     let (input, seed_to_soil) =
         mapped_inputs("seed-to-soil map:")(input).expect("seed-to-soil map");
-    let (input, soil_to_fertilizer) =
+    let (input, soil_to_fert) =
         mapped_inputs("soil-to-fertilizer map:")(input).expect("seed-to-soil map");
-    let (input, fertilizer_to_water) =
+    let (input, fert_to_water) =
         mapped_inputs("fertilizer-to-water map:")(input).expect("seed-to-soil map");
     let (input, water_to_light) =
         mapped_inputs("water-to-light map:")(input).expect("seed-to-soil map");
-    let (input, light_to_temperature) =
+    let (input, light_to_temp) =
         mapped_inputs("light-to-temperature map:")(input).expect("seed-to-soil map");
     let (input, temp_to_humidity) =
         mapped_inputs("temperature-to-humidity map:")(input).expect("seed-to-soil map");
-    let (_, humidity_to_location) =
+    let (_, humid_to_locs) =
         mapped_inputs("humidity-to-location map:")(input).expect("seed-to-soil map");
 
-    let soils: Vec<Soil> = map_to_next(seed_to_soil, seeds);
-    let fertilizers: Vec<Fertilizer> = map_to_next(soil_to_fertilizer, soils);
-    let waters: Vec<Water> = map_to_next(fertilizer_to_water, fertilizers);
-    let lights: Vec<Light> = map_to_next(water_to_light, waters);
-    let temperatures: Vec<Temperature> = map_to_next(light_to_temperature, lights);
-    let humidities: Vec<Humidity> = map_to_next(temp_to_humidity, temperatures);
-    let locations: Vec<Location> = map_to_next(humidity_to_location, humidities);
+    let soils: Vec<_> = seeds.iter().map(|it| it.next(&seed_to_soil)).collect();
+    let ferts: Vec<_> = soils.iter().map(|it| it.next(&soil_to_fert)).collect();
+    let waters: Vec<_> = ferts.iter().map(|it| it.next(&fert_to_water)).collect();
+    let lights: Vec<_> = waters.iter().map(|it| it.next(&water_to_light)).collect();
+    let temps: Vec<_> = lights.iter().map(|it| it.next(&light_to_temp)).collect();
+    let humids: Vec<_> = temps.iter().map(|it| it.next(&temp_to_humidity)).collect();
+    let locations: Vec<_> = humids.iter().map(|it| it.next(&humid_to_locs)).collect();
 
     locations
         .into_iter()
