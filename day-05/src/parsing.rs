@@ -10,15 +10,15 @@ use crate::info::{MapInput, Seed};
 
 pub fn seeds(input: &str) -> IResult<&str, Vec<Seed>> {
     tag("seeds: ")
-        .precedes(separated_list1(space1, complete::u32.map(Seed)))
+        .precedes(separated_list1(space1, complete::u64.map(Seed)))
         .parse(input)
 }
 
 pub fn mapped_input(input: &str) -> IResult<&str, MapInput> {
     tuple((
-        complete::u32,
-        space1.precedes(complete::u32),
-        space1.precedes(complete::u32),
+        complete::u64,
+        space1.precedes(complete::u64),
+        space1.precedes(complete::u64),
     ))
     .map(|(dst, src, count)| MapInput(dst, src, count))
     .parse(input)

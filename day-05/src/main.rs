@@ -1,11 +1,48 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Range};
 
 use day_05::{
-    info::{Fertilizer, Humidity, Light, Location, MapInput, MapInputs, Soil, Temperature, Water},
+    info::{
+        Fertilizer, Humidity, Light, Location, MapInput, MapInputs, SingleTuple, Soil, Temperature,
+        Water,
+    },
     parsing::{mapped_inputs, seeds},
 };
 
-fn map_to_next<
+trait MyContains<T> {
+    fn my_contains(&self, ele: T) -> bool;
+}
+
+impl<T: SingleTuple> MyContains<T> for Range<u64> {
+    fn my_contains(&self, ele: T) -> bool {
+        let num = ele.to_tuple().0;
+        self.start <= num && num < self.end
+    }
+}
+
+fn map_to_next<F: SingleTuple + Copy, T: SingleTuple>(
+    inputs: Vec<MapInput>,
+    prev: Vec<F>,
+) -> Vec<T> {
+    prev.iter()
+        .map(|tup| {
+            match (inputs
+                .iter()
+                .filter_map(|input| {
+                    match ((input.1..(input.1 + input.2)) as Range<u64>).my_contains(*tup) {
+                        true => Some((input.0 + (tup.to_tuple().0 - input.1),)),
+                        false => None,
+                    }
+                })
+                .next())
+            {
+                Some(x) => T::from_tuple(x),
+                None => T::from_tuple(tup.to_tuple()),
+            }
+        })
+        .collect()
+}
+
+fn map_to_next2<
     F: day_05::info::SingleTuple + Eq + std::hash::Hash,
     T: day_05::info::SingleTuple + Eq + std::hash::Hash + Copy,
 >(
@@ -21,7 +58,7 @@ fn map_to_next<
         .collect()
 }
 
-fn process_part1(input: &str) -> u32 {
+fn process_part1(input: &str) -> u64 {
     let (input, seeds) = seeds(input).expect("should contain seeds");
     let (input, seed_to_soil) =
         mapped_inputs("seed-to-soil map:")(input).expect("seed-to-soil map");

@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 
 #[derive(PartialEq, Eq)]
-pub struct MapInput(pub u32, pub u32, pub u32);
+pub struct MapInput(pub u64, pub u64, pub u64);
 pub struct MapInputs(pub Vec<MapInput>);
 
 pub trait SingleTuple {
-    fn from_tuple(tuple: (u32,)) -> Self;
-    fn to_tuple(&self) -> (u32,);
+    fn from_tuple(tuple: (u64,)) -> Self;
+    fn to_tuple(&self) -> (u64,);
 }
 
 macro_rules! impl_single_tuple {
     ($name:ty) => {
         impl SingleTuple for $name {
-            fn from_tuple(tuple: (u32,)) -> Self {
+            fn from_tuple(tuple: (u64,)) -> Self {
                 Self(tuple.0)
             }
 
-            fn to_tuple(&self) -> (u32,) {
+            fn to_tuple(&self) -> (u64,) {
                 (self.0,)
             }
         }
@@ -24,35 +24,35 @@ macro_rules! impl_single_tuple {
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub struct Seed(pub u32);
+pub struct Seed(pub u64);
 impl_single_tuple!(Seed);
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub struct Soil(pub u32);
+pub struct Soil(pub u64);
 impl_single_tuple!(Soil);
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub struct Fertilizer(pub u32);
+pub struct Fertilizer(pub u64);
 impl_single_tuple!(Fertilizer);
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub struct Water(pub u32);
+pub struct Water(pub u64);
 impl_single_tuple!(Water);
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub struct Light(pub u32);
+pub struct Light(pub u64);
 impl_single_tuple!(Light);
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub struct Temperature(pub u32);
+pub struct Temperature(pub u64);
 impl_single_tuple!(Temperature);
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub struct Humidity(pub u32);
+pub struct Humidity(pub u64);
 impl_single_tuple!(Humidity);
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub struct Location(pub u32);
+pub struct Location(pub u64);
 impl_single_tuple!(Location);
 
 impl<F, T> From<MapInputs> for HashMap<F, T>
