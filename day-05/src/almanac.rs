@@ -1,3 +1,15 @@
+use std::{iter::Map, ops::Range};
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub struct SeedRange(pub u64, pub u64);
+
+impl SeedRange {
+    // NOTE: This is *going* to be slow, should optimize later
+    pub fn seeds(&self) -> Map<Range<u64>, fn(u64) -> Seed> {
+        (self.0..(self.0 + self.1)).map(Seed)
+    }
+}
+
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct MapInput(pub u64, pub u64, pub u64);
 

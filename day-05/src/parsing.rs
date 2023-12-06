@@ -1,12 +1,24 @@
 use nom::{
     character::complete::{self, multispace1, space1},
     multi::separated_list1,
-    sequence::tuple,
+    sequence::{separated_pair, tuple},
     IResult, Parser,
 };
 use nom_supreme::{parser_ext::ParserExt, tag::complete::tag};
 
-use crate::almanac::{MapInput, Seed};
+use crate::almanac::{MapInput, Seed, SeedRange};
+
+pub fn seed_range(input: &str) -> IResult<&str, SeedRange> {
+    separated_pair(complete::u64, space1, complete::u64)
+        .map(|(start, count)| SeedRange(start, count))
+        .parse(input)
+}
+
+pub fn seeds_from_ranges(input: &str) -> IResult<&str, Vec<SeedRange>> {
+    tag("seeds: ")
+        .precedes(separated_list1(space1, seed_range))
+        .parse(input)
+}
 
 pub fn seeds(input: &str) -> IResult<&str, Vec<Seed>> {
     tag("seeds: ")
@@ -37,7 +49,7 @@ mod tests {
     use crate::parsing::*;
 
     #[test]
-    fn parsing() {
+    fn parsing_normal() {
         let input = "seeds: 79 14 55 13
 
             seed-to-soil map:
@@ -118,6 +130,16 @@ mod tests {
 
         assert!(
             matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput(60, 56, 37), MapInput(56, 93, 4)])
+        );
+    }
+
+    #[test]
+    fn seed_ranges() {
+        let input = "seeds: 79 14 55 13";
+        let out = seeds_from_ranges(input);
+
+        assert!(
+            matches!(&out, Ok((_, ranges)) if *ranges == vec![SeedRange(79, 14), SeedRange(55, 13)])
         );
     }
 }
