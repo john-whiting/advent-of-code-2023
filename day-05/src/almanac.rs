@@ -1,21 +1,28 @@
-use std::{iter::Map, ops::Range};
+use rayon::{iter::Map, prelude::*, range::Iter};
+use std::ops::Range;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct SeedRange(pub u64, pub u64);
 
 impl SeedRange {
     // NOTE: This is *going* to be slow, should optimize later
-    pub fn seeds(&self) -> Map<Range<u64>, fn(u64) -> Seed> {
-        (self.0..(self.0 + self.1)).map(Seed)
+    pub fn seeds(&self) -> Map<Iter<u64>, fn(u64) -> Seed> {
+        (self.0..(self.0 + self.1)).into_par_iter().map(Seed)
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
-pub struct MapInput(pub u64, pub u64, pub u64);
+#[derive(PartialEq, Eq, Clone)]
+pub struct MapInput(pub u64, pub Range<u64>);
+
+impl MapInput {
+    pub fn new(dest: u64, src: u64, count: u64) -> Self {
+        Self(dest, src..(src + count))
+    }
+}
 
 macro_rules! impl_almanac_property {
     ($from:tt) => {
-        #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+        #[derive(PartialEq, Eq, Hash)]
         pub struct $from(pub u64);
 
         impl $from {
@@ -25,7 +32,7 @@ macro_rules! impl_almanac_property {
         }
     };
     ($from:tt, $to:ty) => {
-        #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+        #[derive(PartialEq, Eq, Hash)]
         pub struct $from(pub u64);
 
         impl $from {
@@ -34,20 +41,20 @@ macro_rules! impl_almanac_property {
                 Self(value)
             }
 
-            fn next_number(&self, input: MapInput) -> Option<u64> {
+            fn next_number(&self, input: &MapInput) -> Option<u64> {
                 let num = self.0;
-                let range = input.1..(input.1 + input.2);
+                let src_range = &input.1;
 
                 // Check that it is in range
-                if !(range.start <= num && num < range.end) {
+                if !(src_range.start <= num && num < src_range.end) {
                     return None;
                 }
 
-                Some(input.0 + (num - range.start))
+                Some(input.0 + (num - src_range.start))
             }
 
             pub fn next(&self, inputs: &[MapInput]) -> $to {
-                match inputs.iter().find_map(|input| self.next_number(*input)) {
+                match inputs.iter().find_map(|input| self.next_number(input)) {
                     Some(x) => <$to>::new(x),
                     None => <$to>::new(self.0),
                 }

@@ -32,7 +32,7 @@ pub fn mapped_input(input: &str) -> IResult<&str, MapInput> {
         space1.precedes(complete::u64),
         space1.precedes(complete::u64),
     ))
-    .map(|(dst, src, count)| MapInput(dst, src, count))
+    .map(|(dst, src, count)| MapInput(dst, src..(src + count)))
     .parse(input)
 }
 
@@ -93,43 +93,43 @@ mod tests {
         let out = mapped_inputs("seed-to-soil map:")(out.unwrap().0);
 
         assert!(
-            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput(50, 98, 2), MapInput(52, 50, 48)])
+            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput::new(50, 98, 2), MapInput::new(52, 50, 48)])
         );
 
         let out = mapped_inputs("soil-to-fertilizer map:")(out.unwrap().0);
 
         assert!(
-            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput(0, 15, 37), MapInput(37, 52, 2), MapInput(39, 0, 15)])
+            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput::new(0, 15, 37), MapInput::new(37, 52, 2), MapInput::new(39, 0, 15)])
         );
 
         let out = mapped_inputs("fertilizer-to-water map:")(out.unwrap().0);
 
         assert!(
-            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput(49, 53, 8), MapInput(0, 11, 42), MapInput(42, 0, 7), MapInput(57, 7, 4)])
+            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput::new(49, 53, 8), MapInput::new(0, 11, 42), MapInput::new(42, 0, 7), MapInput::new(57, 7, 4)])
         );
 
         let out = mapped_inputs("water-to-light map:")(out.unwrap().0);
 
         assert!(
-            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput(88, 18, 7), MapInput(18, 25, 70)])
+            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput::new(88, 18, 7), MapInput::new(18, 25, 70)])
         );
 
         let out = mapped_inputs("light-to-temperature map:")(out.unwrap().0);
 
         assert!(
-            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput(45, 77, 23), MapInput(81, 45, 19), MapInput(68, 64, 13)])
+            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput::new(45, 77, 23), MapInput::new(81, 45, 19), MapInput::new(68, 64, 13)])
         );
 
         let out = mapped_inputs("temperature-to-humidity map:")(out.unwrap().0);
 
         assert!(
-            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput(0, 69, 1), MapInput(1, 0, 69)])
+            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput::new(0, 69, 1), MapInput::new(1, 0, 69)])
         );
 
         let out = mapped_inputs("humidity-to-location map:")(out.unwrap().0);
 
         assert!(
-            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput(60, 56, 37), MapInput(56, 93, 4)])
+            matches!(&out, Ok((_, found_inputs)) if *found_inputs == vec![MapInput::new(60, 56, 37), MapInput::new(56, 93, 4)])
         );
     }
 

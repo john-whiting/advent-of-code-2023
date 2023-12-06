@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use day_05::{
     almanac::Location,
     parsing::{mapped_inputs, seeds, seeds_from_ranges},
@@ -21,7 +23,7 @@ fn process_part1(input: &str) -> u64 {
         mapped_inputs("humidity-to-location map:")(input).expect("seed-to-soil map");
 
     seeds
-        .iter()
+        .into_par_iter()
         .map(|seed| seed.next(&seed_to_soil))
         .map(|soil| soil.next(&soil_to_fert))
         .map(|fert| fert.next(&fert_to_water))
@@ -54,7 +56,7 @@ fn process_part2(input: &str) -> u64 {
         mapped_inputs("humidity-to-location map:")(input).expect("seed-to-soil map");
 
     seed_ranges
-        .into_iter()
+        .into_par_iter()
         .map(|range| {
             range
                 .seeds()
