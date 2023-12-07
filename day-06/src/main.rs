@@ -6,24 +6,6 @@ use nom::{
 };
 use nom_supreme::{tag::complete::tag, ParserExt};
 
-fn ceil_or_next(num: f64) -> i64 {
-    let ceiled = num.ceil() as i64;
-    if ceiled == num.floor() as i64 {
-        ceiled + 1
-    } else {
-        ceiled
-    }
-}
-
-fn floor_or_prev(num: f64) -> i64 {
-    let floored = num.floor() as i64;
-    if floored == num.ceil() as i64 {
-        floored - 1
-    } else {
-        floored
-    }
-}
-
 fn get_time_range(hold_time: i64, target_distance: i64) -> (i64, i64) {
     let hold_time = hold_time as f64;
     let target_distance = target_distance as f64;
@@ -31,10 +13,10 @@ fn get_time_range(hold_time: i64, target_distance: i64) -> (i64, i64) {
     let max_distance = (hold_time * hold_time) / 4.0;
     let max_distance_time = hold_time / 2.0;
 
-    let low = ceil_or_next(max_distance_time - (max_distance - target_distance).sqrt());
-    let high = floor_or_prev(max_distance_time + (max_distance - target_distance).sqrt());
+    let low = (max_distance_time - (max_distance - target_distance).sqrt()).floor() as i64;
+    let high = (max_distance_time + (max_distance - target_distance).sqrt()).ceil() as i64;
 
-    (low, high)
+    (low + 1, high - 1)
 }
 
 fn get_margin(hold_time: i64, target_distance: i64) -> i64 {
