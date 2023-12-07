@@ -6,7 +6,7 @@ use nom::{
 };
 use nom_supreme::{tag::complete::tag, ParserExt};
 
-fn get_time_range(hold_time: i64, target_distance: i64) -> (i64, i64) {
+fn get_margin(hold_time: i64, target_distance: i64) -> i64 {
     let hold_time = hold_time as f64;
     let target_distance = target_distance as f64;
 
@@ -16,13 +16,7 @@ fn get_time_range(hold_time: i64, target_distance: i64) -> (i64, i64) {
     let low = (max_distance_time - (max_distance - target_distance).sqrt()).floor() as i64;
     let high = (max_distance_time + (max_distance - target_distance).sqrt()).ceil() as i64;
 
-    (low + 1, high - 1)
-}
-
-fn get_margin(hold_time: i64, target_distance: i64) -> i64 {
-    let (low, high) = get_time_range(hold_time, target_distance);
-
-    (high - low) + 1
+    high - low - 1
 }
 
 fn parse_values(input: &str) -> IResult<&str, (Vec<i64>, Vec<i64>)> {
@@ -79,10 +73,10 @@ mod tests {
     use crate::*;
 
     #[test]
-    fn test_time_range() {
-        assert_eq!(get_time_range(7, 9), (2, 5));
-        assert_eq!(get_time_range(15, 40), (4, 11));
-        assert_eq!(get_time_range(30, 200), (11, 19));
+    fn test_margins() {
+        assert_eq!(get_margin(7, 9), 4);
+        assert_eq!(get_margin(15, 40), 8);
+        assert_eq!(get_margin(30, 200), 9);
     }
 
     #[test]
