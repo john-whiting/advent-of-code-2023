@@ -2,3 +2,5 @@
 resolver = "2"
 members = ["day-??"]
 
+[profile.release]
+opt-level = 3
