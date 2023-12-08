@@ -24,33 +24,6 @@ impl Card {
     }
 }
 
-impl From<char> for Card {
-    fn from(value: char) -> Self {
-        Card::new(value)
-    }
-}
-
-struct Cards<'a> {
-    hand: &'a Hand,
-    count: usize,
-}
-
-impl<'a> Iterator for Cards<'a> {
-    type Item = Card;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.count += 1;
-        match self.count {
-            1 => Some(self.hand.0),
-            2 => Some(self.hand.1),
-            3 => Some(self.hand.2),
-            4 => Some(self.hand.3),
-            5 => Some(self.hand.4),
-            _ => None,
-        }
-    }
-}
-
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum HandType {
     HighCard,
@@ -64,8 +37,8 @@ enum HandType {
 
 impl From<&Hand> for HandType {
     fn from(value: &Hand) -> Self {
-        let mut frequencies: Vec<_> = value
-            .cards()
+        let mut frequencies: Vec<_> = [value.0, value.1, value.2, value.3, value.4]
+            .iter()
             .filter(|card| !matches!(card, Card(1))) // Remove jokers
             .fold(HashMap::new(), |mut map, val| {
                 map.entry(val).and_modify(|frq| *frq += 1).or_insert(1);
@@ -122,13 +95,6 @@ impl Hand {
                 bid as usize,
             ),
         ))
-    }
-
-    fn cards(&self) -> Cards<'_> {
-        Cards {
-            hand: self,
-            count: 0,
-        }
     }
 }
 
