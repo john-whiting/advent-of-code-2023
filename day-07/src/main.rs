@@ -35,9 +35,32 @@ enum HandType {
     FiveOfAKind,
 }
 
-impl From<&Hand> for HandType {
-    fn from(value: &Hand) -> Self {
-        let mut frequencies: Vec<_> = [value.0, value.1, value.2, value.3, value.4]
+#[derive(Debug, PartialEq, Eq)]
+struct Hand(Card, Card, Card, Card, Card, usize);
+
+impl Hand {
+    fn parse(input: &str) -> IResult<&str, Self> {
+        let (input, (cards, bid)) = separated_pair(
+            tuple((anychar, anychar, anychar, anychar, anychar)),
+            space1,
+            complete::u32,
+        )(input)?;
+
+        Ok((
+            input,
+            Self(
+                Card::new(cards.0),
+                Card::new(cards.1),
+                Card::new(cards.2),
+                Card::new(cards.3),
+                Card::new(cards.4),
+                bid as usize,
+            ),
+        ))
+    }
+
+    fn hand_type(&self) -> HandType {
+        let mut frequencies: Vec<_> = [self.0, self.1, self.2, self.3, self.4]
             .iter()
             .filter(|card| !matches!(card, Card(1))) // Remove jokers
             .fold(HashMap::new(), |mut map, val| {
@@ -73,31 +96,6 @@ impl From<&Hand> for HandType {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-struct Hand(Card, Card, Card, Card, Card, usize);
-
-impl Hand {
-    fn parse(input: &str) -> IResult<&str, Self> {
-        let (input, (cards, bid)) = separated_pair(
-            tuple((anychar, anychar, anychar, anychar, anychar)),
-            space1,
-            complete::u32,
-        )(input)?;
-
-        Ok((
-            input,
-            Self(
-                Card::new(cards.0),
-                Card::new(cards.1),
-                Card::new(cards.2),
-                Card::new(cards.3),
-                Card::new(cards.4),
-                bid as usize,
-            ),
-        ))
-    }
-}
-
 impl PartialOrd for Hand {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
@@ -106,11 +104,11 @@ impl PartialOrd for Hand {
 
 impl Ord for Hand {
     fn cmp(&self, other: &Self) -> Ordering {
-        let self_hand: HandType = self.into();
-        let other_hand: HandType = other.into();
+        let self_hand_type = self.hand_type();
+        let other_hand_type = other.hand_type();
 
         // Check for non-equal hand_type
-        match self_hand.cmp(&other_hand) {
+        match self_hand_type.cmp(&other_hand_type) {
             Ordering::Equal => {}
             x => return x,
         }
@@ -212,7 +210,7 @@ mod tests {
     fn test_hand_type(#[case] input: &str, #[case] hand_type: HandType) {
         let (_, hand) = Hand::parse(input).unwrap();
 
-        assert_eq!(hand_type, (&hand).into());
+        assert_eq!(hand_type, hand.hand_type());
     }
 
     #[rstest]
@@ -248,4 +246,4 @@ mod tests {
             QQQJA 483";
         assert_eq!(process_part2(input), 5905);
     }
-}
+})
