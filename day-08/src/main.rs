@@ -6,7 +6,7 @@ use nom::{
     character::complete::{self, multispace1},
     combinator::map_res,
     multi::{many1, separated_list1},
-    sequence::{preceded, separated_pair, terminated, tuple},
+    sequence::{delimited, separated_pair, tuple},
     IResult,
 };
 use num_integer::lcm;
@@ -43,11 +43,9 @@ fn mapping(input: &str) -> IResult<&str, Vec<(&str, DirectionPair<'_>)>> {
         multispace1,
         tuple((
             take(3usize),
-            terminated(
-                preceded(
-                    tag(" = ("),
-                    separated_pair(take(3usize), tag(", "), take(3usize)),
-                ),
+            delimited(
+                tag(" = ("),
+                separated_pair(take(3usize), tag(", "), take(3usize)),
                 tag(")"),
             ),
         )),
