@@ -246,4 +246,4 @@ mod tests {
             QQQJA 483";
         assert_eq!(process_part2(input), 5905);
     }
-})
+}
